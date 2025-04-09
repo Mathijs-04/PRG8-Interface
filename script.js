@@ -6,24 +6,89 @@ import {
 
 ml5.setBackend("webgl");
 
-const nn = ml5.neuralNetwork({task: 'classification', debug: true});
+const nn = ml5.neuralNetwork({ task: 'classification', debug: true });
 const modelDetails = {
     model: 'model/model.json',
     metadata: 'model/model_meta.json',
     weights: 'model/model.weights.bin'
 };
-nn.load(modelDetails, () => console.log("Model loaded successfully!"));
 
-const enableWebcamButton = document.getElementById("webcamButton");
+let gameState = {
+    isPlaying: false,
+    countdown: 3,
+    playerChoice: null,
+    computerChoice: null,
+    timerId: null
+};
+
+const elements = {
+    webcamButton: document.getElementById("webcamButton"),
+    startGameButton: document.getElementById("startGame"),
+    predictionDiv: document.getElementById("predictionDiv"),
+    countdown: document.getElementById("countdown"),
+    computerChoice: document.getElementById("computerChoice"),
+    result: document.getElementById("result")
+};
+
+const choices = ['Schild', 'Magie', 'Zwaard'];
+const outcomes = {
+    Schild: { beats: 'Zwaard', emoji: '🛡️' },
+    Zwaard: { beats: 'Magie', emoji: '🗡️' },
+    Magie: { beats: 'Schild', emoji: '🔥' }
+};
+
+function getComputerChoice() {
+    return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function determineWinner(player, computer) {
+    if (player === computer) return "Gelijkspel!";
+    return outcomes[player].beats === computer ? "Jij wint! 🎉" : "Computer wint! 😢";
+}
+
+async function updateGameDisplay() {
+    elements.countdown.textContent = gameState.countdown;
+    elements.computerChoice.textContent = gameState.computerChoice
+        ? `${gameState.computerChoice} ${outcomes[gameState.computerChoice].emoji}`
+        : "";
+}
+
+function gameLoop() {
+    if (gameState.countdown > 0) {
+        gameState.countdown--;
+        elements.countdown.textContent = `Countdown: ${gameState.countdown}`;
+        elements.computerChoice.textContent = "Computer kiest...";
+    } else {
+        clearInterval(gameState.timerId);
+        const result = determineWinner(gameState.playerChoice, gameState.computerChoice);
+        elements.result.textContent = result;
+        elements.result.style.color = result.includes("wint")
+            ? (result.includes("Jij") ? "#4CAF50" : "#ff4444")
+            : "#ffd700";
+
+        elements.computerChoice.textContent =
+            `Computer: ${gameState.computerChoice} ${outcomes[gameState.computerChoice].emoji}`;
+
+        setTimeout(() => {
+            gameState.isPlaying = false;
+            gameState.countdown = 3;
+            gameState.playerChoice = null;
+            gameState.computerChoice = null;
+            elements.startGameButton.disabled = false;
+            elements.countdown.textContent = "";
+            elements.computerChoice.textContent = "";
+            elements.result.textContent = "";
+        }, 3000);
+    }
+}
+
+let handLandmarker, webcamRunning = false;
 const video = document.getElementById("webcam");
 const canvasElement = document.getElementById("output_canvas");
 const canvasCtx = canvasElement.getContext("2d");
 const drawUtils = new DrawingUtils(canvasCtx);
 
-let handLandmarker = undefined;
-let webcamRunning = false;
-
-const createHandLandmarker = async () => {
+async function createHandLandmarker() {
     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
     handLandmarker = await HandLandmarker.createFromOptions(vision, {
         baseOptions: {
@@ -33,18 +98,16 @@ const createHandLandmarker = async () => {
         runningMode: "VIDEO",
         numHands: 1
     });
-
-    enableWebcamButton.addEventListener("click", enableCam);
-};
+}
 
 async function enableCam() {
-    webcamRunning = true;
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         video.srcObject = stream;
         video.addEventListener("loadeddata", () => {
             canvasElement.width = video.videoWidth;
             canvasElement.height = video.videoHeight;
+            webcamRunning = true;
             predictWebcam();
         });
     } catch (error) {
@@ -53,60 +116,40 @@ async function enableCam() {
 }
 
 async function predictWebcam() {
+    if (!webcamRunning) return;
+
     const results = await handLandmarker.detectForVideo(video, performance.now());
-    const predictionDiv = document.getElementById('predictionDiv');
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-    if (results.landmarks.length === 0) {
-        predictionDiv.innerHTML = '';
-    } else {
+    if (results.landmarks.length > 0) {
         const hand = results.landmarks[0];
-        if (hand) {
-            const handData = hand.map((point) => [point.x, point.y, point.z]).flat();
+        const handData = hand.map((point) => [point.x, point.y, point.z]).flat();
 
-            const prediction = await nn.classify(handData);
-
-            if (prediction && prediction.length > 0) {
-                const topPrediction = prediction.reduce((max, p) => p.confidence > max.confidence ? p : max);
-
-                console.log("Top prediction:", topPrediction);
-
-                switch (topPrediction.label) {
-                    case "Schild":
-                        predictionDiv.innerHTML = 'Schild 🛡️';
-                        console.log('Set predictionDiv to Schild');
-                        break;
-                    case "Magie":
-                        predictionDiv.innerHTML = 'Magie 🔥';
-                        console.log('Set predictionDiv to Magie');
-                        break;
-                    case "Zwaard":
-                        predictionDiv.innerHTML = 'Zwaard 🗡️';
-                        console.log('Set predictionDiv to Zwaard');
-                        break;
-                    default:
-                        predictionDiv.innerHTML = '';
-                        console.log('Set predictionDiv to empty (default)');
-                        break;
-                }
-            }
+        const prediction = await nn.classify(handData);
+        if (prediction.length > 0) {
+            const topPrediction = prediction.reduce((max, p) => p.confidence > max.confidence ? p : max);
+            elements.predictionDiv.textContent = `${topPrediction.label} ${outcomes[topPrediction.label]?.emoji || ''}`;
+            if (gameState.isPlaying) gameState.playerChoice = topPrediction.label;
         }
 
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        for (const hand of results.landmarks) {
-            drawUtils.drawConnectors(hand, HandLandmarker.HAND_CONNECTIONS, {color: "#00FF00", lineWidth: 5});
-            drawUtils.drawLandmarks(hand, {radius: 4, color: "#FF0000", lineWidth: 2});
-        }
+        drawUtils.drawConnectors(hand, HandLandmarker.HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 5 });
+        drawUtils.drawLandmarks(hand, { radius: 4, color: "#FF0000", lineWidth: 2 });
     }
 
-    if (webcamRunning) {
-        window.requestAnimationFrame(predictWebcam);
+    requestAnimationFrame(predictWebcam);
+}
+
+elements.webcamButton.addEventListener("click", enableCam);
+elements.startGameButton.addEventListener("click", () => {
+    if (!gameState.isPlaying) {
+        gameState.isPlaying = true;
+        gameState.computerChoice = getComputerChoice();
+        elements.startGameButton.disabled = true;
+        gameState.timerId = setInterval(gameLoop, 1000);
     }
-}
+});
 
-if (navigator.mediaDevices?.getUserMedia) {
-    nn.load(modelDetails, () => {
-        console.log("Model loaded successfully!");
-        createHandLandmarker();
-    });
-}
-
+nn.load(modelDetails, () => {
+    console.log("Model loaded successfully!");
+    createHandLandmarker();
+});

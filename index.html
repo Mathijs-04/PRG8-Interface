@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interface</title>
+    <title>Schild Magie Zwaard</title>
     <link rel="stylesheet" href="./style.css">
     <script defer type="module" src="./script.js"></script>
     <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
 </head>
-
 <body>
 <section>
-    <h1>Interface</h1>
-    <button id="webcamButton">Start Webcam</button>
+    <h1>Schild ⚔️ Magie ⚔️ Zwaard</h1>
+    <div id="gameControls">
+        <button id="webcamButton">Start Webcam</button>
+        <button id="startGame">Start Spel</button>
+    </div>
+    <div class="gameInfo">
+        <div id="countdown" class="infoBox"></div>
+        <div id="computerChoice" class="infoBox"></div>
+    </div>
     <div class="videoView">
         <div style="position: relative;">
-            <video id="webcam" style="position: absolute;" muted autoplay playsinline></video>
-            <canvas id="output_canvas" style="position: absolute; left: 0; top: 0;"></canvas>
-            <div id="myimage"></div>
+            <video id="webcam" muted autoplay playsinline></video>
+            <canvas id="output_canvas"></canvas>
         </div>
     </div>
-    <div id="predictionDiv" style="font-size: 2rem; color: black; background-color: white; padding: 1rem; position: absolute; top: 585px; left: 15px; z-index: 1000;"></div>
+    <div id="predictionDiv" class="predictionBox"></div>
+    <div id="result" class="resultBox"></div>
 </section>
 </body>
 </html>

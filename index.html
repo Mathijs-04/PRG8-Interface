@@ -1,1 +1,28 @@
-<!--HTML voor de gebruikersinterface-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface</title>
+    <link rel="stylesheet" href="./style.css">
+    <script defer type="module" src="./script.js"></script>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+</head>
+
+<body>
+<section>
+    <h1>Title</h1>
+    <button id="webcamButton">Start Webcam</button>
+    <div class="videoView">
+        <div style="position: relative;">
+            <video id="webcam" style="position: absolute;" muted autoplay playsinline></video>
+            <canvas id="output_canvas" style="position: absolute; left: 0; top: 0;"></canvas>
+            <div id="myimage"></div>
+        </div>
+    </div>
+</section>
+<div id="predictionDiv"></div>
+</body>
+
+</html>

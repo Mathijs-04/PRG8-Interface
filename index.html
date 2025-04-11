@@ -3,30 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schild Magie Zwaard</title>
+    <title>PRG8</title>
     <link rel="stylesheet" href="./style.css">
     <script defer type="module" src="./script.js"></script>
     <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
 </head>
 <body>
-<section>
-    <h1>Schild ⚔️ Magie ⚔️ Zwaard</h1>
-    <div id="gameControls">
-        <button id="webcamButton">Start Webcam</button>
-        <button id="startGame">Start Spel</button>
+<div class="page-layout">
+    <div class="side-panel instructions">
+        <h3>Hoe speel je?</h3>
+        <p>1. Start de webcam</p>
+        <p>2. Toon een gebaar:</p>
+        <ul>
+            <li>🛡️ Schild -> ✋</li>
+            <li>🔥 Magie -> ✊</li>
+            <li>🗡️ Zwaard -> ☝️</li>
+        </ul>
+        <p>3. Klik op "Start Spel"</p>
     </div>
-    <div class="gameInfo">
-        <div id="countdown" class="infoBox"></div>
-        <div id="computerChoice" class="infoBox"></div>
-    </div>
-    <div class="videoView">
-        <div style="position: relative;">
-            <video id="webcam" muted autoplay playsinline></video>
-            <canvas id="output_canvas"></canvas>
+
+    <div class="game-container">
+        <header class="game-header">
+            <h1>⚔️ SCHILD MAGIE ZWAARD ⚔️</h1>
+        </header>
+
+        <div class="main-content">
+            <div class="game-controls">
+                <button id="webcamButton" class="control-button">
+                    <span class="button-icon">📷</span> Start Webcam
+                </button>
+                <button id="startGame" class="control-button" disabled>
+                    <span class="button-icon">🎮</span> Start Spel
+                </button>
+            </div>
+
+            <div class="score-display">
+                <div class="score-box">
+                    <h3>Jij</h3>
+                    <div id="playerScore">0</div>
+                </div>
+                <div class="score-box">
+                    <h3>Computer</h3>
+                    <div id="computerScore">0</div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="info-card">
+                    <h3>Jouw keuze</h3>
+                    <div id="predictionDiv" class="choice-display">-</div>
+                </div>
+                <div class="info-card">
+                    <h3>Countdown</h3>
+                    <div id="countdown" class="countdown-display">3</div>
+                </div>
+                <div class="info-card">
+                    <h3>Computer</h3>
+                    <div id="computerChoice" class="choice-display">-</div>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="webcam" muted autoplay playsinline></video>
+                    <canvas id="output_canvas"></canvas>
+                </div>
+            </div>
+
+            <div id="result" class="result-display"></div>
         </div>
     </div>
-    <div id="predictionDiv" class="predictionBox"></div>
-    <div id="result" class="resultBox"></div>
-</section>
+
+    <div class="side-panel rules">
+        <h3>Wie wint van wie?</h3>
+        <div class="rule-item">🛡️ Schild > 🗡️ Zwaard</div>
+        <div class="rule-item">🗡️ Zwaard > 🔥 Magie</div>
+        <div class="rule-item">🔥 Magie > 🛡️ Schild</div>
+    </div>
+</div>
 </body>
 </html>

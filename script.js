@@ -18,7 +18,10 @@ let gameState = {
     countdown: 3,
     playerChoice: null,
     computerChoice: null,
-    timerId: null
+    timerId: null,
+    hasPlayed: false,
+    playerWins: 0,
+    computerWins: 0
 };
 
 const elements = {
@@ -27,7 +30,9 @@ const elements = {
     predictionDiv: document.getElementById("predictionDiv"),
     countdown: document.getElementById("countdown"),
     computerChoice: document.getElementById("computerChoice"),
-    result: document.getElementById("result")
+    result: document.getElementById("result"),
+    playerScore: document.getElementById("playerScore"),
+    computerScore: document.getElementById("computerScore")
 };
 
 const choices = ['Schild', 'Magie', 'Zwaard'];
@@ -42,42 +47,49 @@ function getComputerChoice() {
 }
 
 function determineWinner(player, computer) {
-    if (player === computer) return "Gelijkspel!";
-    return outcomes[player].beats === computer ? "Jij wint! 🎉" : "Computer wint! 😢";
-}
+    if (player === computer) {
+        elements.result.className = "result-display draw";
+        return "Gelijkspel!";
+    }
 
-async function updateGameDisplay() {
-    elements.countdown.textContent = gameState.countdown;
-    elements.computerChoice.textContent = gameState.computerChoice
-        ? `${gameState.computerChoice} ${outcomes[gameState.computerChoice].emoji}`
-        : "";
+    if (outcomes[player].beats === computer) {
+        elements.result.className = "result-display win";
+        gameState.playerWins++;
+        elements.playerScore.textContent = gameState.playerWins;
+        return "Jij wint! 🎉";
+    } else {
+        elements.result.className = "result-display lose";
+        gameState.computerWins++;
+        elements.computerScore.textContent = gameState.computerWins;
+        return "Computer wint! 😢";
+    }
 }
 
 function gameLoop() {
     if (gameState.countdown > 0) {
         gameState.countdown--;
-        elements.countdown.textContent = `Countdown: ${gameState.countdown}`;
-        elements.computerChoice.textContent = "Computer kiest...";
+        elements.countdown.textContent = gameState.countdown;
+        elements.computerChoice.textContent = "...";
     } else {
         clearInterval(gameState.timerId);
         const result = determineWinner(gameState.playerChoice, gameState.computerChoice);
         elements.result.textContent = result;
-        elements.result.style.color = result.includes("wint")
-            ? (result.includes("Jij") ? "#4CAF50" : "#ff4444")
-            : "#ffd700";
 
         elements.computerChoice.textContent =
-            `Computer: ${gameState.computerChoice} ${outcomes[gameState.computerChoice].emoji}`;
+            `${gameState.computerChoice} ${outcomes[gameState.computerChoice].emoji}`;
 
         setTimeout(() => {
             gameState.isPlaying = false;
             gameState.countdown = 3;
             gameState.playerChoice = null;
             gameState.computerChoice = null;
-            elements.startGameButton.disabled = false;
-            elements.countdown.textContent = "";
-            elements.computerChoice.textContent = "";
+            gameState.hasPlayed = true;
+            elements.startGameButton.disabled = !webcamRunning;
+            elements.startGameButton.innerHTML = '<span class="button-icon">🎮</span> Speel nog een keer';
+            elements.countdown.textContent = "3";
+            elements.computerChoice.textContent = "-";
             elements.result.textContent = "";
+            elements.result.className = "result-display";
         }, 3000);
     }
 }
@@ -108,6 +120,9 @@ async function enableCam() {
             canvasElement.width = video.videoWidth;
             canvasElement.height = video.videoHeight;
             webcamRunning = true;
+            elements.startGameButton.disabled = false;
+            elements.webcamButton.textContent = "📷 Webcam actief";
+            elements.webcamButton.disabled = true;
             predictWebcam();
         });
     } catch (error) {
